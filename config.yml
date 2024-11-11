@@ -1,0 +1,26 @@
+# Model Settings
+model:
+  generation:
+    name: "arcee-ai/Llama-3.1-SuperNova-Lite"
+    parameters:
+      max_length: 512
+      min_length: 50
+      num_beams: 4
+      temperature: 0.7
+      do_sample: true
+      top_p: 0.9
+      top_k: 50
+    device:
+      dtype: "float16"
+      map: "auto"
+
+# Chunk Settings
+chunks:
+  size: 500
+  overlap: 50
+
+# Processing Settings
+processing:
+  max_chunks: 5
+  min_chunk_length: 50
+  max_summary_length: 150
