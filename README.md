@@ -2,6 +2,13 @@
 
 A modern search engine implementation using Retrieval-Augmented Generation (RAG) with Google Search API integration.
 
+## 🎥 Demo
+
+<video width="600" height="400" controls>
+  <source src="./demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## 🚀 Features
 
 - Real-time web search using Google Search API
@@ -232,4 +239,4 @@ A modern search engine implementation using Retrieval-Augmented Generation (RAG)
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 👥 Authors
-    [Dongjun Kim](https://github.com/junkim100/)
+- [Dongjun Kim](https://github.com/junkim100)
