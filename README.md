@@ -3,6 +3,7 @@
 A modern search engine implementation using Retrieval-Augmented Generation (RAG) with Google Search API integration.
 
 ## 🎥 Demo
+![Demo Screenshot](./demo.png)
 
 [Click here to watch the demo](./demo.mp4)
 
