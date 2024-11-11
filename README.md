@@ -4,10 +4,9 @@ A modern search engine implementation using Retrieval-Augmented Generation (RAG)
 
 ## 🎥 Demo
 
-<video width="600" height="400" controls>
-  <source src="./demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+[Click here to watch the demo](./demo.mp4)
+
+> This will download or open the demo video depending on your browser settings.
 
 ## 🚀 Features
 
