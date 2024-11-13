@@ -5,10 +5,6 @@ A modern search engine implementation using Retrieval-Augmented Generation (RAG)
 ## 🎥 Demo
 ![Demo Screenshot](./demo.png)
 
-[Click here to watch the demo](./demo.mp4)
-
-> This will download or open the demo video depending on your browser settings.
-
 ## 🚀 Features
 
 - Real-time web search using Google Search API
