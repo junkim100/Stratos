@@ -19,6 +19,10 @@ chunks:
   size: 500
   overlap: 50
 
+# Source Settings
+source:
+  num_sources: 10
+
 # Processing Settings
 processing:
   max_chunks: 5
