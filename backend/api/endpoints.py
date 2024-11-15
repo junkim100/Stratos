@@ -1,9 +1,11 @@
+import asyncio
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List, Dict, Any
 import logging
 from pydantic import BaseModel
+from itertools import chain  # Import chain to flatten lists
 
 from ..core.query_decomposer import QueryDecomposer
 from ..core.retriever import Retriever
@@ -52,21 +54,18 @@ class SearchPipeline:
             logger.info(f"\n////////// Decomposing query //////////\n")
             sub_queries = await self.query_decomposer(query)
 
-            # Step 2: Retrieve and process chunks for each sub-query
-            all_chunks: List[ProcessedChunk] = []
-            # for sub_query in sub_queries:
-            #     logger.info(f"\n////////// Processing sub-query: {sub_query} //////////\n")
-            #     chunks = await self.retriever(sub_query)
-            #     all_chunks.extend(chunks)
-
-            # retrieve the sub-queries in parallel and log the sub-query index
+            # Step 2: Retrieve and process chunks for each sub-query in parallel
             async def retrieve_chunks(sub_query: str, index: int) -> List[ProcessedChunk]:
-                logger.info(f"\n////////// Processing sub-query {index}: {sub_query} //////////\n")
+                logger.info(f"\n////////// Processing sub-query {index+1}: {sub_query} //////////\n")
                 return await self.retriever(sub_query)
 
-            all_chunks = await asyncio.gather(*[retrieve_chunks(sub_query, index) for index, sub_query in enumerate(sub_queries)])
+            # Use asyncio.gather to retrieve the sub-queries in parallel and log the sub-query index
+            all_chunks_nested = await asyncio.gather(*[retrieve_chunks(sub_query, index) for index, sub_query in enumerate(sub_queries)])
 
-            # Step 3: Process chunks
+            # Flatten the list of lists into a single flat list of ProcessedChunk objects
+            all_chunks = list(chain.from_iterable(all_chunks_nested))
+
+            # Step 3: Process chunks (ensure it's a flat list)
             logger.info(f"\n////////// Processing {len(all_chunks)} chunks //////////\n")
             processed_chunks = await self.processor(all_chunks)
 

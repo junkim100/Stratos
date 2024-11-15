@@ -43,6 +43,7 @@ class Retriever:
             'position': result.get('position', 0)
         }
 
+        # Process the snippet using Chunker and return a flat list of chunks
         return self.chunker.process(result['snippet'], metadata)
 
     async def retrieve(self, query: str) -> List[ProcessedChunk]:
@@ -53,7 +54,7 @@ class Retriever:
             query (str): Search query
 
         Returns:
-            List[ProcessedChunk]: List of processed chunks from search results
+            List[ProcessedChunk]: Flat list of processed chunks from search results
         """
         try:
             # Get search results
@@ -62,11 +63,11 @@ class Retriever:
                 num_results=settings.SOURCE_NUM
             )
 
-            # Process all results
+            # Process all results into a flat list of chunks
             all_chunks = []
             for result in search_results:
                 chunks = self._process_search_result(result)
-                all_chunks.extend(chunks)
+                all_chunks.extend(chunks)  # Ensure we append chunks to a flat list
 
             return all_chunks[:settings.CHUNK_PROCESSOR_PARAMS['max_chunks']]
 

@@ -47,7 +47,7 @@ class Chunker:
             metadata (Dict[str, Any]): Metadata to be attached to each chunk
 
         Returns:
-            List[ProcessedChunk]: List of processed chunks with metadata
+            List[ProcessedChunk]: Flat list of processed chunks with metadata
         """
         try:
             # Preprocess text
@@ -56,10 +56,10 @@ class Chunker:
             # Split text into chunks
             raw_chunks = self.splitter.split_text(processed_text)
 
-            # Filter chunks
+            # Filter chunks based on length and other criteria
             filtered_chunks = self._filter_chunks(raw_chunks)
 
-            # Create ProcessedChunk objects
+            # Create ProcessedChunk objects for each filtered chunk and return as a flat list
             return [
                 ProcessedChunk(
                     text=chunk,
@@ -67,12 +67,13 @@ class Chunker:
                     score=metadata.get('score', 0.0),
                     metadata=metadata
                 )
-                for chunk in filtered_chunks
+                for chunk in filtered_chunks  # Ensure we create a flat list of ProcessedChunks here
             ]
 
         except Exception as e:
             print(f"Error in chunk processing: {str(e)}")
-            # Return single chunk if processing fails
+
+            # Return single chunk if processing fails to ensure we always have valid output.
             return [ProcessedChunk(
                 text=text[:self.params['size']],
                 source=metadata.get('source', ''),

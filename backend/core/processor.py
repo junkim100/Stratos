@@ -13,58 +13,60 @@ class Processor:
         self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
 
         # Configuration
-        self.max_chunk_length = 512
-        self.min_chunk_length = 50
-        self.max_summary_length = 150
-        self.min_summary_length = 40
+        self.max_chunk_length = 512  # Max length for chunk input
+        self.min_chunk_length = 50   # Minimum length for valid chunks
+        self.max_summary_length = 150  # Max length for summary output
+        self.min_summary_length = 40   # Min length for summary output
 
     def summarize(self, text: str) -> str:
         """
-        Summarize text using T5 model
+        Summarize text using the T5 model.
         """
-        # self.logger.info(f'Summarizing text of length: {len(text)}')
+        try:
+            # Prepare input text for summarization
+            input_text = f"summarize: {text}"
 
-        # Prepare input text
-        input_text = f"summarize: {text}"
+            # Tokenize input text for the model
+            inputs = self.tokenizer.encode(
+                input_text,
+                return_tensors="pt",
+                max_length=self.max_chunk_length,
+                truncation=True
+            )
 
-        # Tokenize
-        inputs = self.tokenizer.encode(
-            input_text,
-            return_tensors="pt",
-            max_length=self.max_chunk_length,
-            truncation=True
-        )
+            # Generate summary using the model
+            summary_ids = self.model.generate(
+                inputs,
+                max_length=self.max_summary_length,
+                min_length=self.min_summary_length,
+                length_penalty=2.0,
+                num_beams=4,
+                early_stopping=True
+            )
 
-        # Generate summary
-        summary_ids = self.model.generate(
-            inputs,
-            max_length=self.max_summary_length,
-            min_length=self.min_summary_length,
-            length_penalty=2.0,
-            num_beams=4,
-            early_stopping=True
-        )
+            # Decode generated summary into text
+            summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
-        # Decode summary
-        summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-        # self.logger.info(f'Generated summary of length: {len(summary)}')
+            return summary
 
-        return summary
+        except Exception as e:
+            self.logger.error(f"Error during summarization: {str(e)}")
+            return text  # Return original text if summarization fails
 
     def clean_text(self, text: str) -> str:
         """
-        Clean and normalize text
+        Clean and normalize text by removing extra whitespace and short texts.
         """
-        # Remove extra whitespace
-        text = ' '.join(text.split())
-        # Remove very short texts
-        if len(text) < self.min_chunk_length:
-            return ""
-        return text
+        cleaned_text = ' '.join(text.split())  # Remove extra whitespace
+
+        if len(cleaned_text) < self.min_chunk_length:
+            return ""  # Return empty string if text is too short
+
+        return cleaned_text
 
     def remove_duplicates(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
         """
-        Remove duplicate chunks while preserving order
+        Remove duplicate chunks while preserving order.
         """
         seen = set()
         unique_chunks = []
@@ -78,49 +80,69 @@ class Processor:
 
     async def process(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
         """
-        Main processing pipeline
+        Main processing pipeline to clean, deduplicate, and summarize chunks.
+
+        Args:
+            chunks (List[ProcessedChunk]): List of processed chunks
+
+        Returns:
+            List[ProcessedChunk]: List of processed and summarized chunks
         """
         try:
-            # self.logger.info(f'Starting to process {len(chunks)} chunks')
+            # Log incoming data type and content for debugging
+            self.logger.info(f"Received {len(chunks)} chunks for processing")
 
-            # Step 1: Clean texts
+            if not all(isinstance(chunk, ProcessedChunk) for chunk in chunks):
+                raise ValueError("All elements in 'chunks' must be instances of ProcessedChunk")
+
+            # Step 1: Clean texts in each chunk
             cleaned_chunks = [
                 ProcessedChunk(
                     text=self.clean_text(chunk.text),
-                    source=chunk.source
+                    source=chunk.source,
+                    score=chunk.score,
+                    metadata=chunk.metadata
                 )
                 for chunk in chunks
             ]
 
             # Remove empty chunks after cleaning
-            cleaned_chunks = [
-                chunk for chunk in cleaned_chunks
-                if chunk.text
-            ]
+            cleaned_chunks = [chunk for chunk in cleaned_chunks if chunk.text]
 
-            # Step 2: Remove duplicates
+            if not cleaned_chunks:
+                raise ValueError("No valid chunks after cleaning")
+
+            # Step 2: Remove duplicate chunks based on their text content
             unique_chunks = self.remove_duplicates(cleaned_chunks)
-            # self.logger.info(f'Removed duplicates, {len(unique_chunks)} chunks remaining')
 
-            # Step 3: Summarize chunks
-            processed_chunks = [
+            if not unique_chunks:
+                raise ValueError("No valid unique chunks after deduplication")
+
+            # Step 3: Summarize each chunk's text content
+            summarized_chunks = [
                 ProcessedChunk(
                     text=self.summarize(chunk.text),
-                    source=chunk.source
+                    source=chunk.source,
+                    score=chunk.score,
+                    metadata=chunk.metadata
                 )
                 for chunk in unique_chunks
             ]
 
-            # self.logger.info(f'Finished processing, generated {len(processed_chunks)} summaries')
-
-            return processed_chunks
+            return summarized_chunks
 
         except Exception as e:
-            self.logger.error(f'////////////////////////////////////////Error in processing: {str(e)}////////////////////////////////////////')
-            raise
+            self.logger.error(f"Error in processing: {str(e)}")
+            raise e
 
-    def __call__(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
+    async def __call__(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
         """
-        Make the class callable
+        Make the class callable so it can be used directly in pipelines.
+
+        Args:
+            chunks (List[ProcessedChunk]): List of processed chunks
+
+        Returns:
+            List[ProcessedChunk]: Processed and summarized chunks
         """
-        return self.process(chunks)
+        return await self.process(chunks)
