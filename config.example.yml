@@ -1,0 +1,83 @@
+# Agent Configuration
+agents:
+  # Query Decomposition Agent Configuration
+  query_decomposer:
+    # Model identifier/path
+    model: "<model_path_or_identifier>"
+    parameters:
+      max_length: <int>          # Maximum length of generated text
+      min_length: <int>          # Minimum length of generated text
+      temperature: <float>       # Controls randomness (0.0-1.0)
+      do_sample: <bool>          # Whether to use sampling
+      top_p: <float>            # Nucleus sampling parameter
+      top_k: <int>              # Top-k sampling parameter
+      num_beams: <int>          # Number of beams for beam search
+      max_queries: <int>         # Maximum number of sub-queries to generate
+      min_queries: <int>         # Minimum number of sub-queries to generate
+      repetition_penalty: <float> # Penalty for repeating tokens
+    device:
+      dtype: "<dtype>"          # Model precision (float16, float32, etc.)
+      map: "<device_map>"       # Device mapping strategy
+
+  # Text Chunking Agent Configuration
+  chunk_processor:
+    model: "<chunking_method>"   # Chunking strategy/model
+    parameters:
+      size: <int>               # Size of each chunk
+      overlap: <int>            # Overlap between chunks
+      min_length: <int>         # Minimum chunk length
+      max_chunks: <int>         # Maximum number of chunks
+      chunk_type: "<type>"      # Chunking type (sentence, token, etc.)
+      # List of separators for text splitting
+      separators:
+        - "<separator1>"
+        - "<separator2>"
+
+  # Result Reranking Agent Configuration
+  result_reranker:
+    model: "<model_path_or_identifier>"
+    parameters:
+      top_k: <int>              # Number of top results to keep
+      similarity_threshold: <float> # Minimum similarity score
+      cross_encoder: "<model_path>" # Cross-encoder model path
+      batch_size: <int>         # Batch size for processing
+      max_length: <int>         # Maximum input length
+    device:
+      dtype: "<dtype>"
+      map: "<device_map>"
+
+  # Response Generation Agent Configuration
+  response_generator:
+    model: "<model_path_or_identifier>"
+    parameters:
+      max_length: <int>
+      min_length: <int>
+      num_beams: <int>
+      temperature: <float>
+      do_sample: <bool>
+      top_p: <float>
+      top_k: <int>
+      repetition_penalty: <float>
+      length_penalty: <float>    # Penalty for length deviation
+      no_repeat_ngram_size: <int> # Size of n-grams to prevent repetition
+    device:
+      dtype: "<dtype>"
+      map: "<device_map>"
+
+# Source Configuration
+source:
+  num_sources: <int>            # Number of sources to retrieve
+  search_type: "<search_type>"  # Search engine type
+  api_version: "<version>"      # API version
+  country: "<country_code>"     # Country code for search
+  language: "<lang_code>"       # Language code
+  safe_search: <bool>           # Enable/disable safe search
+
+# Processing Configuration
+processing:
+  max_chunks: <int>             # Maximum chunks to process
+  min_chunk_length: <int>       # Minimum chunk length
+  max_summary_length: <int>     # Maximum summary length
+  remove_duplicates: <bool>     # Enable duplicate removal
+  clean_text: <bool>            # Enable text cleaning
+  preserve_order: <bool>        # Preserve chunk order
