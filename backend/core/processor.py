@@ -7,11 +7,11 @@ class Processor:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize T5 model for summarization
         self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
         self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
-        
+
         # Configuration
         self.max_chunk_length = 512
         self.min_chunk_length = 50
@@ -22,11 +22,11 @@ class Processor:
         """
         Summarize text using T5 model
         """
-        self.logger.info(f'Summarizing text of length: {len(text)}')
-        
+        # self.logger.info(f'Summarizing text of length: {len(text)}')
+
         # Prepare input text
         input_text = f"summarize: {text}"
-        
+
         # Tokenize
         inputs = self.tokenizer.encode(
             input_text,
@@ -34,7 +34,7 @@ class Processor:
             max_length=self.max_chunk_length,
             truncation=True
         )
-        
+
         # Generate summary
         summary_ids = self.model.generate(
             inputs,
@@ -44,11 +44,11 @@ class Processor:
             num_beams=4,
             early_stopping=True
         )
-        
+
         # Decode summary
         summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-        self.logger.info(f'Generated summary of length: {len(summary)}')
-        
+        # self.logger.info(f'Generated summary of length: {len(summary)}')
+
         return summary
 
     def clean_text(self, text: str) -> str:
@@ -68,12 +68,12 @@ class Processor:
         """
         seen = set()
         unique_chunks = []
-        
+
         for chunk in chunks:
             if chunk.text not in seen:
                 seen.add(chunk.text)
                 unique_chunks.append(chunk)
-        
+
         return unique_chunks
 
     async def process(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
@@ -81,8 +81,8 @@ class Processor:
         Main processing pipeline
         """
         try:
-            self.logger.info(f'Starting to process {len(chunks)} chunks')
-            
+            # self.logger.info(f'Starting to process {len(chunks)} chunks')
+
             # Step 1: Clean texts
             cleaned_chunks = [
                 ProcessedChunk(
@@ -91,17 +91,17 @@ class Processor:
                 )
                 for chunk in chunks
             ]
-            
+
             # Remove empty chunks after cleaning
             cleaned_chunks = [
                 chunk for chunk in cleaned_chunks
                 if chunk.text
             ]
-            
+
             # Step 2: Remove duplicates
             unique_chunks = self.remove_duplicates(cleaned_chunks)
-            self.logger.info(f'Removed duplicates, {len(unique_chunks)} chunks remaining')
-            
+            # self.logger.info(f'Removed duplicates, {len(unique_chunks)} chunks remaining')
+
             # Step 3: Summarize chunks
             processed_chunks = [
                 ProcessedChunk(
@@ -110,13 +110,13 @@ class Processor:
                 )
                 for chunk in unique_chunks
             ]
-            
-            self.logger.info(f'Finished processing, generated {len(processed_chunks)} summaries')
-            
+
+            # self.logger.info(f'Finished processing, generated {len(processed_chunks)} summaries')
+
             return processed_chunks
-            
+
         except Exception as e:
-            self.logger.error(f'Error in processing: {str(e)}')
+            self.logger.error(f'////////////////////////////////////////Error in processing: {str(e)}////////////////////////////////////////')
             raise
 
     def __call__(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
