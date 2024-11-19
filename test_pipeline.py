@@ -38,7 +38,7 @@ class SearchPipeline:
 
             # Step 3: Process chunks (ensure it's a flat list)
             # logger.info(f"\n////////// Processing {len(all_chunks)} chunks //////////\n")
-            processed_chunks = await self.processor(all_chunks)
+            processed_chunks = await self.processor(query, all_chunks)
 
             # Step 4: Generate response
             # logger.info("\n////////// Generating final response //////////\n")

@@ -2,6 +2,7 @@ from typing import List
 import logging
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from ..models.schema import ProcessedChunk
+from FlagEmbedding import FlagReranker
 
 class Processor:
     def __init__(self):
@@ -12,11 +13,24 @@ class Processor:
         self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
         self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
 
+        # Initialize reranker model for reranking
+        self.reranker = self._initialize_reranker()
+
         # Configuration
         self.max_chunk_length = 512  # Max length for chunk input
         self.min_chunk_length = 50   # Minimum length for valid chunks
         self.max_summary_length = 150  # Max length for summary output
         self.min_summary_length = 40   # Min length for summary output
+    
+    def _initialize_reranker(self) -> FlagReranker:
+        """Initialize the reranker model and tokenizer."""
+        try:
+            reranker = FlagReranker('BAAI/bge-reranker-large', use_fp16=True)
+            return reranker
+
+        except Exception as e:
+            self.logger.error(f"\n////////// Error initializing model: {str(e)} //////////\n")
+            raise RuntimeError(f"Failed to initialize model: {str(e)}")
 
     def summarize(self, text: str) -> str:
         """
@@ -24,6 +38,7 @@ class Processor:
         """
         try:
             # Prepare input text for summarization
+            # summarize in terms of query ?? 
             input_text = f"summarize: {text}"
 
             # Tokenize input text for the model
@@ -78,7 +93,28 @@ class Processor:
 
         return unique_chunks
 
-    async def process(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
+    def rerank(self, query: str, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
+        """
+        Rerank chunks based on their relevance to the query.
+        """
+        q_p_pairs = [[query, chunk.text] for chunk in chunks]
+        scored_chunks = self.reranker.compute_score(q_p_pairs)
+        
+        scored_chunks_with_data = [
+            (score, chunk) for score, chunk in zip(scored_chunks, chunks)
+        ]
+        scored_chunks_with_data.sort(key=lambda x: x[0], reverse=True)
+        
+        # TODO: set topk in config.yml
+        top_chunks = scored_chunks_with_data[:5]
+        
+        reranked_chunks = [
+            ProcessedChunk(text=chunk.text, source=chunk.source, score=chunk.score, metadata=chunk.metadata) for _, chunk in top_chunks
+        ]
+
+        return reranked_chunks
+
+    async def process(self, query: str, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
         """
         Main processing pipeline to clean, deduplicate, and summarize chunks.
 
@@ -117,8 +153,11 @@ class Processor:
 
             if not unique_chunks:
                 raise ValueError("No valid unique chunks after deduplication")
+            
+            # Step 3: Rerank chunks based on their relevance to the query
+            reranked_chunks = self.rerank(query, unique_chunks)
 
-            # Step 3: Summarize each chunk's text content
+            # Step 4: Summarize each chunk's text content
             summarized_chunks = [
                 ProcessedChunk(
                     text=self.summarize(chunk.text),
@@ -126,7 +165,7 @@ class Processor:
                     score=chunk.score,
                     metadata=chunk.metadata
                 )
-                for chunk in unique_chunks
+                for chunk in reranked_chunks
             ]
 
             return summarized_chunks
@@ -135,7 +174,7 @@ class Processor:
             self.logger.error(f"Error in processing: {str(e)}")
             raise e
 
-    async def __call__(self, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
+    async def __call__(self, query: str, chunks: List[ProcessedChunk]) -> List[ProcessedChunk]:
         """
         Make the class callable so it can be used directly in pipelines.
 
@@ -145,4 +184,4 @@ class Processor:
         Returns:
             List[ProcessedChunk]: Processed and summarized chunks
         """
-        return await self.process(chunks)
+        return await self.process(query, chunks)
