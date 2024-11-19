@@ -55,6 +55,8 @@ class QueryDecomposer:
 
     def _create_prompt(self, query: str) -> str:
         """Create the decomposition prompt."""
+        # TODO: add few-shot examples
+
         return f"""Break down this complex query into simpler, atomic sub-queries.
         Each sub-query should focus on a specific aspect of the main query.
         Generate between {self.params['min_queries']} and {self.params['max_queries']} sub-queries, whatever you think is enough to break down the query effectively.
