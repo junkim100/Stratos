@@ -36,9 +36,9 @@ class Processor:
         """
         Summarize text using the T5 model.
         """
+        # TODO: summarize via query or intent of query
         try:
             # Prepare input text for summarization
-            # summarize in terms of query ?? 
             input_text = f"summarize: {text}"
 
             # Tokenize input text for the model
