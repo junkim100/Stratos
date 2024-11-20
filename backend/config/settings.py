@@ -7,6 +7,7 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
+
 class Settings:
     def __init__(self):
         # Load YAML config
@@ -26,12 +27,7 @@ class Settings:
             return yaml.safe_load(f)
 
     def _initialize_settings(self) -> None:
-        """Initialize all settings from YAML and environment variables"""
-        # API Settings
-        self.API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
-        self.API_PORT: int = int(os.getenv("API_PORT", "51441"))
-        self.CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:51440").split(",")
-
+        ########## .env Settings ##########
         # Google API Settings
         self.GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
         self.GOOGLE_CSE_ID: str = os.getenv("GOOGLE_CSE_ID")
@@ -42,54 +38,20 @@ class Settings:
         # OpenAI API Settings
         self.OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
 
-        # Query Decomposer settings
-        self.QUERY_DECOMPOSER_MODEL: str = self.config["agents"]["query_decomposer"]["model"]
-        self.QUERY_DECOMPOSER_PARAMS: Dict[str, Any] = self.config["agents"]["query_decomposer"]["parameters"]
+        ########## YML Settings ##########
+        # Agents settings
+        self.ActionDecider: Dict[str, Any] = self.config["agents"]["ActionDecider"]
+        self.ActionGenerator: Dict[str, Any] = self.config["agents"]["ActionGenerator"]
+        self.ActionExecutor: Dict[str, Any] = self.config["agents"]["ActionExecutor"]
+        self.Searcher: Dict[str, Any] = self.config["agents"]["Searcher"]
+        self.Summarizer: Dict[str, Any] = self.config["agents"]["Summarizer"]
+        self.Responder: Dict[str, Any] = self.config["agents"]["Responder"]
 
-        # Chunk Processor settings
-        self.CHUNK_PROCESSOR_MODEL: str = self.config["agents"]["chunk_processor"]["model"]
-        self.CHUNK_PROCESSOR_PARAMS: Dict[str, Any] = self.config["agents"]["chunk_processor"]["parameters"]
+        # Logging settings
+        self.LOG_LEVEL: str = self.config["logging_level"]
 
-        # Result Reranker settings
-        self.RERANKER_MODEL: str = self.config["agents"]["result_reranker"]["model"]
-        self.RERANKER_PARAMS: Dict[str, Any] = self.config["agents"]["result_reranker"]["parameters"]
-
-        # Response Generator settings
-        self.RESPONSE_GENERATOR_MODEL: str = self.config["agents"]["response_generator"]["model"]
-        self.RESPONSE_GENERATOR_PARAMS: Dict[str, Any] = self.config["agents"]["response_generator"]["parameters"]
-        self.RESPONSE_GENERATOR_DEVICE: Dict[str, str] = self.config["agents"]["response_generator"]["device"]
-
-        # Source settings
-        self.SOURCE_NUM: int = self.config["source"]["num_sources"]
-
-        # Processing settings
-        self.MAX_CHUNKS: int = self.config["processing"]["max_chunks"]
-        self.MIN_CHUNK_LENGTH: int = self.config["processing"]["min_chunk_length"]
-        self.MAX_SUMMARY_LENGTH: int = self.config["processing"]["max_summary_length"]
-
-    @property
-    def model_dtype(self) -> str:
-        """Get model dtype setting"""
-        return self.RESPONSE_GENERATOR_DEVICE["dtype"]
-
-    @property
-    def model_device_map(self) -> str:
-        """Get model device mapping setting"""
-        return self.RESPONSE_GENERATOR_DEVICE["map"]
-
-    @property
-    def generation_params(self) -> Dict[str, Any]:
-        """Get all generation parameters"""
-        return self.RESPONSE_GENERATOR_PARAMS
-
-    @property
-    def api_url(self) -> str:
-        """Get the complete API URL"""
-        return f"http://{self.API_HOST}:{self.API_PORT}"
-
-    def __str__(self) -> str:
-        """String representation of current settings"""
-        return f"Settings(API: {self.api_url}, Models: {self.RESPONSE_GENERATOR_MODEL})"
+        # Number of sources to search per query
+        self.NUM_SOURCES: int = self.config["num_sources"]
 
 
 # Create a global settings instance that will be imported by the agents and other modules

@@ -1,49 +1,43 @@
-# backend/utils/helpers.py
+import logging
+import torch
+from transformers import PreTrainedModel, PreTrainedTokenizer
+from ..config.settings import settings
+from typing import List, Dict, Any
 
-import time
-from typing import Any, Dict, List
-from datetime import datetime
-
-
-class SearchHelpers:
-    @staticmethod
-    def chunk_text(text: str, chunk_size: int = 500) -> List[str]:
-        """Split text into chunks of specified size."""
-        return [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
-
-    @staticmethod
-    def remove_duplicates(chunks: List[str]) -> List[str]:
-        """Remove duplicate chunks while preserving order."""
-        seen = set()
-        return [x for x in chunks if not (x in seen or seen.add(x))]
+logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
+logger = logging.getLogger(__name__)
 
 
-class ValidationHelpers:
-    @staticmethod
-    def validate_query(query: str) -> bool:
-        """Validate search query."""
-        if not query or len(query.strip()) == 0:
-            return False
-        if len(query) > 1000:  # Maximum query length
-            return False
-        return True
+class Format:
+    def parse_output(self, output: str, max_num: int) -> List[str]:
+        try:
+            # Split into lines and clean up
+            lines = output.strip().split("\n")
+
+            # Process each line
+            parsed_outputs = []
+            for line in lines:
+                # Clean up the line and check if it starts with a number
+                cleaned = line.strip().lstrip("1234567890.-) ")
+                if line.strip() and any(
+                    line.strip().startswith(str(i)) for i in range(1, 10)
+                ):
+                    parsed_outputs.append(cleaned)
+                    if len(parsed_outputs) >= max_num:
+                        break
+
+            return parsed_outputs
+
+        except Exception as e:
+            logger.error(f"Error parsing output: {str(e)}")
+            return []
+
+    def validate_outputs(self, outputs: List[str], original_query: str) -> List[str]:
+        if not outputs or len(outputs) < 1:
+            logger.warning("Generated fewer than 1 outputs. Using original query.")
+            return [original_query]
+
+        return outputs
 
 
-class ResponseHelpers:
-    @staticmethod
-    def format_response(answer: str, sources: List[str]) -> Dict[str, Any]:
-        """Format the final response."""
-        return {
-            "answer": answer,
-            "sources": sources,
-            "timestamp": datetime.utcnow().isoformat(),
-            "processing_time": time.time(),
-        }
-
-
-class LoggingHelpers:
-    @staticmethod
-    def log_query(query: str, processing_time: float) -> None:
-        """Log search query and processing time."""
-        timestamp = datetime.utcnow().isoformat()
-        print(f"[{timestamp}] Query: {query} (Processing time: {processing_time}s)")
+# TODO: Create Generate class with generate_text method
