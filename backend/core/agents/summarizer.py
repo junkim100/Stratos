@@ -67,25 +67,12 @@ class Summarizer(BaseAgent):
             inputs = self._tokenize_input(self._create_prompt(text, summary_type))
 
             # Adjust generation parameters based on summary type
-            max_length = (
-                2048
-                if summary_type == "final"
-                else (
-                    512
-                    if summary_type == "individual"
-                    else self.params.get("max_length", 256)
-                )
-            )
-
-            min_length = (
-                512
-                if summary_type == "final"
-                else (
-                    128
-                    if summary_type == "individual"
-                    else self.params.get("min_length", 50)
-                )
-            )
+            if summary_type == "final":
+                max_length = self.params.get("final_max_length")
+            elif summary_type == "individual":
+                max_length = self.params.get("individual_max_length")
+            else:
+                raise ValueError("Invalid summary type")
 
             with torch.no_grad():
                 outputs = self.model.generate(
@@ -93,7 +80,6 @@ class Summarizer(BaseAgent):
                     attention_mask=inputs.attention_mask,
                     pad_token_id=self.tokenizer.pad_token_id,
                     max_length=max_length,
-                    min_length=min_length,
                     temperature=self.params.get("temperature", 0.7),
                     num_beams=self.params.get("num_beams", 4),
                     do_sample=self.params.get("do_sample", True),
@@ -105,7 +91,7 @@ class Summarizer(BaseAgent):
 
             summary = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-            if not summary or len(summary) < min_length // 4:
+            if not summary or len(summary) < 50 // 4:
                 raise ValueError("Generated summary is too short or empty")
 
             return summary.strip()
@@ -120,7 +106,7 @@ class Summarizer(BaseAgent):
                 raise ValueError("Input text is too short or empty")
 
             summary = self._generate_text(text, summary_type)
-            self.logger.debug(f"Generated {summary_type} summary: {summary}")
+            self.logger.info(f"Generated {summary_type} summary: {summary}")
             return summary
 
         except Exception as e:
