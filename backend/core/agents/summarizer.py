@@ -62,7 +62,7 @@ class Summarizer(BaseAgent):
             padding=True,
         ).to(self.model.device)
 
-    def _generate_text(self, text: str, summary_type: str = "brief") -> str:
+    def _generate_response(self, text: str, summary_type: str = "brief") -> str:
         try:
             inputs = self._tokenize_input(self._create_prompt(text, summary_type))
 
@@ -105,7 +105,7 @@ class Summarizer(BaseAgent):
             if not text or len(text.strip()) < 10:
                 raise ValueError("Input text is too short or empty")
 
-            summary = self._generate_text(text, summary_type)
+            summary = self._generate_response(text, summary_type)
             self.logger.info(f"Generated {summary_type} summary: {summary}")
             return summary
 
