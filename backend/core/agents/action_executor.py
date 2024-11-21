@@ -71,7 +71,7 @@ class ActionExecutor(BaseAgent):
 
         return True
 
-    async def execute_action(self, actions: List[str]) -> Dict[str, Any]:
+    async def execute_action(self, query: str, actions: List[str]) -> Dict[str, Any]:
         """
         Execute actions and format results for the Responder.
         Returns a dictionary with properly formatted search results and summaries.
@@ -98,10 +98,7 @@ class ActionExecutor(BaseAgent):
             ]
             for search_action, _ in search_actions:
                 self.logger.info(f"Executing search: {search_action}")
-                search_results = await self.searcher(search_action)
-
-                if not search_results:
-                    continue
+                search_results = await self.searcher(query, search_action)
 
                 # Process each search result
                 for result in search_results:
@@ -160,8 +157,5 @@ class ActionExecutor(BaseAgent):
             self.logger.error(f"Error in action execution: {str(e)}")
             raise
 
-    async def __call__(self, actions: List[str]) -> Dict[str, Any]:
-        """
-        Wrapper for execute_action method.
-        """
-        return await self.execute_action(actions)
+    async def __call__(self, query: str, actions: List[str]) -> Dict[str, Any]:
+        return await self.execute_action(query, actions)

@@ -7,6 +7,7 @@ from transformers import (
     PreTrainedTokenizer,
 )
 from ..config.settings import settings
+from typing import List, Dict
 import datetime
 
 
@@ -43,7 +44,6 @@ class BaseAgent:
                 self.params.get("model"),
                 torch_dtype=torch.float16,
                 device_map="auto",
-                pad_token_id=tokenizer.pad_token_id,
                 trust_remote_code=True,
                 token=settings.HUGGINGFACE_API_KEY,
             )
@@ -53,6 +53,27 @@ class BaseAgent:
         except Exception as e:
             self.logger.error(f"Error initializing model: {str(e)}")
             raise RuntimeError(f"Failed to initialize model: {str(e)}")
+
+    def _create_prompt(self, text: str) -> str:
+        raise NotImplementedError("All agents must implement _create_prompt method")
+
+    def _tokenize_input(self, chat_template: List[Dict[str, str]], max_length: int) -> Dict[str, torch.Tensor]:
+        """
+        Tokenize the input based on the provided chat template using apply_chat_template.
+        """
+        # Apply the chat template
+        inputs = self.tokenizer.apply_chat_template(
+            conversation=chat_template,
+            add_generation_prompt=True,  # Adds a generation prompt for models that need it
+            return_dict=True,
+            return_tensors="pt",
+            max_length=max_length
+        )
+
+        # Move tensors to the correct device
+        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+
+        return inputs
 
     async def __call__(self, *args, **kwargs):
         raise NotImplementedError("All agents must implement __call__ method")

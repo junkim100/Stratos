@@ -13,18 +13,12 @@ class ActionDecider(BaseAgent):
     def _initialize_model(self):
         return None, None
 
-    def _tokenize_input(self, query: str) -> torch.Tensor:
-        return self.tokenizer(
-            query,
-            return_tensors="pt",
-            truncation=True,
-            max_length=self.params.get("max_length"),
-            padding=True,
-        ).to(self.model.device)
+    def _create_prompt(self, text: str) -> str:
+        pass
 
     async def _action_decider(self, query: str) -> List[str]:
         # use a classifier model to decide if the query should be broken down into actions
-        inputs = self._tokenize_input(query)
+        inputs = self._tokenize_input(self._create_prompt(query), self.params.get("max_length"))
         with torch.no_grad():
             outputs = self.model.generate(
                 inputs.input_ids,
