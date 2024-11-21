@@ -24,7 +24,7 @@ class SearchPipeline:
         action_decision = await self.action_decider(query)
         if action_decision:
             actions = await self.action_generator(query)
-            results = await self.action_executor(actions)
+            results = await self.action_executor(query, actions)
             response = await self.responder(query, results)
             return response
         else:
