@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from backend.config.settings import settings
@@ -36,29 +37,36 @@ class SearchPipeline:
 async def run_pipeline():
     pipeline = SearchPipeline()
 
-    # Get user input from command line
-    # query = input("Enter your query: ")
-    # query = "Pour over recipe for an Ethiopian light roast coffee"
-    # query = "World news today"
-    query = "How are the reviews for Wicked"
+    # Loop the pipeline so that it can process multiple queries
+    while True:
+        # Get user input from command line
+        query = input("Enter your query: ")
+        # query = "Pour over recipe for an Ethiopian light roast coffee"
+        # query = "World news today"
+        # query = "How are the reviews for Wicked"
 
-    # Run the pipeline with the provided query
-    start = time.time()
-    try:
-        response = await pipeline.process_query(query)
-    except Exception as e:
-        logger.error(f"\n================ Pipeline Error: {str(e)} ================\n")
-        return
+        # Run the pipeline with the provided query
+        start = time.time()
+        try:
+            response = await pipeline.process_query(query)
+        except Exception as e:
+            logger.error(f"\n================ Pipeline Error: {str(e)} ================\n")
+            return
 
-    # Print the response
-    print("\n================ Answer ================\n")
-    print(response["answer"])
-    print("\n================ Sources ================\n")
-    for source in response["sources"]:
-        print(source)
+        # Clear the display
+        os.system("clear")
+        # Print the response
+        print("\n================ Query ================\n")
+        print(query)
+        print("\n================ Answer ================\n")
+        print(response["answer"])
+        print("\n================ Sources ================\n")
+        for source in response["sources"]:
+            print(source)
 
-    end = time.time()
-    print(f"\n\nTime taken: {end - start:.2f}s")
+        end = time.time()
+        print("\n================ Time ================\n")
+        print(f"{end - start:.2f}s")
 
 
 if __name__ == "__main__":
