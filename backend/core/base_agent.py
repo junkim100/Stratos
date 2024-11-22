@@ -57,7 +57,9 @@ class BaseAgent:
     def _create_prompt(self) -> str:
         raise NotImplementedError("All agents must implement _create_prompt method")
 
-    def _tokenize_input(self, chat_template: List[Dict[str, str]], max_length: int) -> Dict[str, torch.Tensor]:
+    def _tokenize_input(
+        self, chat_template: List[Dict[str, str]], max_length: int
+    ) -> Dict[str, torch.Tensor]:
         """
         Tokenize the input based on the provided chat template using apply_chat_template.
         """
@@ -67,7 +69,7 @@ class BaseAgent:
             add_generation_prompt=True,  # Adds a generation prompt for models that need it
             return_dict=True,
             return_tensors="pt",
-            max_length=max_length
+            max_length=max_length,
         )
 
         # Move tensors to the correct device
@@ -76,7 +78,7 @@ class BaseAgent:
         return inputs
 
     def _generate_response(self) -> str:
-        raise NotImplementedError("All agents must implement _generate_response method
+        raise NotImplementedError("All agents must implement _generate_response method")
 
     async def __call__(self, *args, **kwargs):
         raise NotImplementedError("All agents must implement __call__ method")
